@@ -84,6 +84,7 @@ int main(int argc, char const *argv[])
                             // std::cout << "Received image\n";
                             cv::Mat mat(sHeader.height, sHeader.width, CV_16UC1, vctr.data());
                             cv::normalize(mat, mat, 32768.0, 0.0, cv::NORM_INF);
+                            cv::rotate(mat, mat, cv::ROTATE_180);
                             cv::imshow("img", mat);
                             cv::waitKey(1);
 
