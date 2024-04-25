@@ -5,9 +5,10 @@
 #include "libobsensor/ObSensor.hpp"
 #include "libobsensor/hpp/Error.hpp"
 #include "libobsensor/hpp/Pipeline.hpp"
-#include "window.hpp"
+// #include "window.hpp"
 #include "udpreceiver.hpp"
 #include "opencv4/opencv2/opencv.hpp"
+#include "opencv4/opencv2/core/mat.inl.hpp"
 
 #define BUFFSIZE 1500
 #define IMAGESIZE 640 * 480
@@ -41,9 +42,15 @@ static std::vector<uint8_t> vctr;
 bool IsHeader(uint8_t* data, size_t iBytes);
 void ClearRxBuffer();
 
+static const double gamma_ = 1.5;
+
 int main(int argc, char const *argv[])
 {
     std::cout << "Viewer app\r\n";
+    cv::Mat lookUpTable(1, 256, CV_8U);
+    uint8_t* p = lookUpTable.ptr();
+    for( int i = 0; i < 256; ++i)
+        p[i] = cv::saturate_cast<uint8_t>(pow(i / 255.0, gamma_) * 255.0);
 
     try
     {
@@ -83,9 +90,12 @@ int main(int argc, char const *argv[])
                         {
                             // std::cout << "Received image\n";
                             cv::Mat mat(sHeader.height, sHeader.width, CV_16UC1, vctr.data());
-                            cv::normalize(mat, mat, 32768.0, 0.0, cv::NORM_INF);
-                            cv::rotate(mat, mat, cv::ROTATE_180);
-                            cv::imshow("img", mat);
+                            cv::Mat res;
+                            cv::normalize(mat, res, 32768.0, 0.0, cv::NORM_INF);
+                            // mat.convertTo(res, CV_8U);
+                            // cv::LUT(res, lookUpTable, res);
+                            cv::rotate(res, res, cv::ROTATE_180);
+                            cv::imshow("img", res);
                             cv::waitKey(1);
 
                             vctr.erase(vctr.begin(), vctr.begin() + iAvaiting);
